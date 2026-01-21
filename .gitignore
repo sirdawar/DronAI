@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+airsim-venv/
+
+# Poetry
+poetry.lock
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Unreal Engine
+Blocks/
+Australia/
+DynamicCity/
+EolicPark/
+*.uasset
+*.umap
+Saved/
+Intermediate/
+DerivedDataCache/
+Binaries/
+
+# AirSim client (if you don't want to track it)
+airsim_client/
+
+# Logs
+*.log
+/tmp/
+.claude/
+
+# QGroundControl binary
+QGroundControl.AppImage
+
+# Build artifacts
+*.o
+*.a
+build/
