@@ -1,11 +1,40 @@
 # Claude Instructions for DronAI Project
 
+## Project Vision
+
+This is a **GPS-denied navigation and surveillance system for drones with defense applications**. The project combines cutting-edge simulation with real-world autonomous navigation research.
+
+### Core Mission
+Developing autonomous drone capabilities for:
+
+1. **GPS-Denied Navigation**
+   - Visual-Inertial Odometry (VIO) using camera + IMU fusion
+   - LiDAR-based navigation for obstacle avoidance and 3D mapping
+   - SLAM algorithms for indoor/underground environments
+   - Sensor fusion combining multiple positioning methods
+
+2. **ISR (Intelligence, Surveillance, Reconnaissance)**
+   - Computer vision for vehicle/object detection (YOLO)
+   - Vision-Language Models (GPT-4V/Claude Vision/LLaVA) for scene description
+   - Automated surveillance with AI-driven target identification
+   - Matching camera views to satellite imagery
+
+### Learning Platform
+This simulation environment serves as a **safe prototyping platform** for testing autonomous navigation algorithms before real-world deployment. Engages with open-source community (PX4 Discord, r/diydrones, ArduPilot forums) to leverage existing work and contribute back.
+
 ## Project Overview
 
-This is an autonomous drone development environment combining:
-- **ProjectAirSim**: Unreal Engine simulation plugin (submodule - your fork)
-- **PX4-Autopilot**: Flight controller firmware (submodule - official repo)
-- **Custom Scripts**: Startup automation and utilities
+**Development Environment:**
+- **OS**: Ubuntu Linux
+- **Python**: Poetry for dependency management
+- **Simulation**: Unreal Engine 5.2 with photorealistic environments
+- **Flight Control**: PX4 SITL (Software-in-the-Loop)
+
+**Technology Stack:**
+- **ProjectAirSim**: Unreal Engine 5 simulation plugin (fork of Microsoft AirSim successor) - submodule
+- **PX4-Autopilot**: Industry-standard open-source flight controller firmware - submodule
+- **Python Scripts**: AI integration and autonomous control
+- **Custom Utilities**: Startup automation and diagnostics
 
 ## Project Structure
 

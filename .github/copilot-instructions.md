@@ -2,7 +2,16 @@
 
 ## Project Context
 
-Drone simulation workspace with ProjectAirSim + PX4 + QGroundControl.
+**Mission**: GPS-denied navigation and ISR (Intelligence, Surveillance, Reconnaissance) system for drones with defense applications.
+
+**Research Focus**:
+- GPS-Denied Navigation: VIO (Visual-Inertial Odometry), LiDAR, SLAM, sensor fusion
+- ISR Capabilities: Computer vision (YOLO), Vision-Language Models (GPT-4V/Claude/LLaVA), satellite imagery matching
+- Autonomous target identification and surveillance
+
+**Environment**: Ubuntu Linux, Unreal Engine 5.2, Python with Poetry, PX4 SITL
+
+**Purpose**: Safe prototyping platform for autonomous navigation algorithms before real-world deployment. Learning from open-source community (PX4 Discord, r/diydrones, ArduPilot forums).
 
 ## Critical Startup Order (Never Change)
 
