@@ -1,0 +1,69 @@
+# GitHub Copilot Instructions for DronAI Project
+
+## Project Context
+
+Drone simulation workspace with ProjectAirSim + PX4 + QGroundControl.
+
+## Critical Startup Order (Never Change)
+
+```bash
+1. Unreal (user presses Play)
+2. Python (opens TCP:4560) → sleep 2
+3. PX4 (connects to TCP:4560) → sleep 2
+4. QGC (monitoring on port 18570)
+```
+
+## Port Configuration
+
+- 4560: TCP - PX4 → Unreal simulator
+- 14540: UDP - Python → PX4 control
+- 18570: UDP - QGC ↔ PX4 telemetry
+
+## Code Patterns
+
+### Bash Scripts
+```bash
+gnome-terminal --title="Name" -- bash -c "command" &
+sleep 2  # Simple delays only, no complex checks
+```
+
+### Python (ProjectAirSim)
+```python
+async def main(scenefile):
+    client = ProjectAirSimClient()
+    client.connect()
+    world = World(client, scenefile)
+    drone = Drone(client, world, "Drone1")
+
+    await asyncio.sleep(5)  # Sensor stabilization
+    drone.enable_api_control()
+    await drone.takeoff_async()
+```
+
+## Anti-Patterns
+
+❌ Complex port checking loops (causes hangs)
+❌ Starting PX4 before Python (port 4560 not ready)
+❌ Blocking drone operations (use async/await)
+
+✅ Simple sleep delays
+✅ Python before PX4
+✅ Async drone control
+
+## Submodule Workflow
+
+```bash
+# Modify in submodule
+cd ProjectAirSim
+git commit -m "change"
+git push
+
+# Update parent
+cd ..
+git add ProjectAirSim
+git commit -m "Update submodule"
+```
+
+## Keep It Simple
+
+This project values reliability over automation. Working solution uses manual Play button + simple delays.
