@@ -55,17 +55,45 @@ for i in $(seq 1 20); do
   sleep 3
 done
 
-if ! ss -tlnp | grep -q 4560; then
-  echo "ERROR: Port 4560 never opened"
-  exit 1
+PORT_4560_READY=0
+if ss -tlnp | grep -q 4560; then
+  PORT_4560_READY=1
 fi
 
-# 4. Start PX4 first (avoids Python timeout race)
-echo "[3/4] Starting PX4 SITL first..."
+if [ "$PORT_4560_READY" -eq 0 ]; then
+  echo "⚠️ Port 4560 did not open after Play. Continuing with fallback startup..."
+fi
+
+# 4. Start Python client first in fallback mode (it may trigger/hold sim bridge)
+echo "[3/4] Starting AirSim Python client..."
+cd "$SCRIPTS_DIR"
+nohup $AIRSIM_PY px4_quadrotor_extended.py sitl > /tmp/airsim_client.log 2>&1 &
+PYTHON_PID=$!
+echo "Python client PID: $PYTHON_PID"
+
+# Give Python time to initialize and potentially open the server path
+sleep 10
+if [ "$PORT_4560_READY" -eq 0 ] && ss -tlnp | grep -q 4560; then
+  echo "✅ Port 4560 opened after Python startup"
+  PORT_4560_READY=1
+fi
+
+# 5. Start PX4 SITL
+echo "[4/4] Starting PX4 SITL..."
 cd "$PX4_DIR"
 nohup make px4_sitl none_iris > /tmp/px4.log 2>&1 &
 PX4_PID=$!
 echo "PX4 PID: $PX4_PID"
+
+# If Python exits too early, retry once after PX4 starts
+sleep 8
+if ! kill -0 $PYTHON_PID 2>/dev/null; then
+  echo "⚠️ Python client exited early; retrying once..."
+  cd "$SCRIPTS_DIR"
+  nohup $AIRSIM_PY px4_quadrotor_extended.py sitl >> /tmp/airsim_client.log 2>&1 &
+  PYTHON_PID=$!
+  echo "Python retry PID: $PYTHON_PID"
+fi
 
 # Wait for PX4 boot progress
 echo "Waiting for PX4 to initialize..."
@@ -76,22 +104,6 @@ for i in $(seq 1 30); do
   fi
   sleep 2
 done
-
-# 5. Start Python client after PX4 is up
-echo "[4/4] Starting AirSim Python client..."
-cd "$SCRIPTS_DIR"
-nohup $AIRSIM_PY px4_quadrotor_extended.py sitl > /tmp/airsim_client.log 2>&1 &
-PYTHON_PID=$!
-echo "Python client PID: $PYTHON_PID"
-
-# If Python exits too early, retry once after short delay
-sleep 8
-if ! kill -0 $PYTHON_PID 2>/dev/null; then
-  echo "⚠️ Python client exited early; retrying once..."
-  nohup $AIRSIM_PY px4_quadrotor_extended.py sitl >> /tmp/airsim_client.log 2>&1 &
-  PYTHON_PID=$!
-  echo "Python retry PID: $PYTHON_PID"
-fi
 
 # Wait and check full connection
 sleep 12
