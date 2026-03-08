@@ -64,46 +64,61 @@ if [ "$PORT_4560_READY" -eq 0 ]; then
   echo "⚠️ Port 4560 did not open after Play. Continuing with fallback startup..."
 fi
 
-# 4. Start Python client first in fallback mode (it may trigger/hold sim bridge)
-echo "[3/4] Starting AirSim Python client..."
+wait_for_px4_ready() {
+  local attempts=${1:-60}
+  local sleep_sec=${2:-2}
+  for i in $(seq 1 "$attempts"); do
+    if grep -q "Simulator connected on TCP port 4560\|Ready for takeoff" /tmp/px4.log 2>/dev/null; then
+      echo "✅ PX4 reports simulator link/ready"
+      return 0
+    fi
+    if ! pgrep -f 'PX4-Autopilot/build/.*/bin/px4' >/dev/null 2>&1; then
+      echo "❌ PX4 process is not running"
+      return 1
+    fi
+    sleep "$sleep_sec"
+  done
+  echo "❌ PX4 ready timeout"
+  return 1
+}
+
+# 4. Start PX4 SITL first and ensure readiness before mission script
+echo "[3/4] Starting PX4 SITL..."
+cd "$PX4_DIR"
+nohup make px4_sitl none_iris > /tmp/px4.log 2>&1 &
+PX4_MAKE_PID=$!
+echo "PX4 make PID: $PX4_MAKE_PID"
+
+if ! wait_for_px4_ready 60 2; then
+  echo "⚠️ First PX4 startup not ready, restarting once..."
+  pkill -f 'PX4-Autopilot/build/.*/bin/px4' || true
+  sleep 2
+  : > /tmp/px4.log
+  nohup make px4_sitl none_iris > /tmp/px4.log 2>&1 &
+  PX4_MAKE_PID=$!
+  echo "PX4 restart make PID: $PX4_MAKE_PID"
+
+  if ! wait_for_px4_ready 60 2; then
+    echo "ERROR: PX4 failed readiness check after restart"
+    exit 1
+  fi
+fi
+
+# 5. Start Python mission only after PX4 readiness is confirmed
+echo "[4/4] Starting AirSim Python client..."
 cd "$SCRIPTS_DIR"
 nohup $AIRSIM_PY px4_quadrotor_extended.py sitl > /tmp/airsim_client.log 2>&1 &
 PYTHON_PID=$!
 echo "Python client PID: $PYTHON_PID"
 
-# Give Python time to initialize and potentially open the server path
-sleep 10
-if [ "$PORT_4560_READY" -eq 0 ] && ss -tlnp | grep -q 4560; then
-  echo "✅ Port 4560 opened after Python startup"
-  PORT_4560_READY=1
-fi
-
-# 5. Start PX4 SITL
-echo "[4/4] Starting PX4 SITL..."
-cd "$PX4_DIR"
-nohup make px4_sitl none_iris > /tmp/px4.log 2>&1 &
-PX4_PID=$!
-echo "PX4 PID: $PX4_PID"
-
-# If Python exits too early, retry once after PX4 starts
+# If Python exits too early, retry once after short delay
 sleep 8
 if ! kill -0 $PYTHON_PID 2>/dev/null; then
   echo "⚠️ Python client exited early; retrying once..."
-  cd "$SCRIPTS_DIR"
   nohup $AIRSIM_PY px4_quadrotor_extended.py sitl >> /tmp/airsim_client.log 2>&1 &
   PYTHON_PID=$!
   echo "Python retry PID: $PYTHON_PID"
 fi
-
-# Wait for PX4 boot progress
-echo "Waiting for PX4 to initialize..."
-for i in $(seq 1 30); do
-  if grep -q "Ready for takeoff\|INFO  \[px4\]\|INFO  \[simulator\]" /tmp/px4.log 2>/dev/null; then
-    echo "✅ PX4 booting/ready"
-    break
-  fi
-  sleep 2
-done
 
 # Wait and check full connection
 sleep 12
