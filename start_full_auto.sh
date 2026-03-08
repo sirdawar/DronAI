@@ -12,6 +12,12 @@ UE_REMOTE="/home/davor/UE_5.2_installed/Engine/Plugins/Experimental/PythonScript
 
 echo "=== Starting Drone Simulation ==="
 
+# 0. Hard cleanup to avoid stale PX4 instance conflicts
+pkill -f 'PX4-Autopilot/build/.*/bin/px4' >/dev/null 2>&1 || true
+pkill -f 'px4_sitl none_iris' >/dev/null 2>&1 || true
+pkill -f px4_quadrotor_extended.py >/dev/null 2>&1 || true
+rm -f /tmp/px4.log /tmp/airsim_client.log
+
 # 1. Start UE
 echo "[1/4] Starting Unreal Editor..."
 nohup $UE_ROOT/Engine/Binaries/Linux/UnrealEditor \
