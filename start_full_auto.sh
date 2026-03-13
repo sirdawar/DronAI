@@ -3,6 +3,7 @@
 # Usage: ./start_full_auto.sh
 
 set -e
+export DISPLAY="${DISPLAY:-:1}"
 export UE_ROOT="$HOME/UE_5.2_installed"
 
 AIRSIM_PY="/home/davor/.cache/pypoetry/virtualenvs/projectairsim-UMFaqgh7-py3.10/bin/python"
@@ -11,6 +12,12 @@ PX4_DIR="/home/davor/projects/DronAI/PX4/PX4-Autopilot"
 UE_REMOTE="/home/davor/UE_5.2_installed/Engine/Plugins/Experimental/PythonScriptPlugin/Content/Python"
 
 echo "=== Starting Drone Simulation ==="
+
+# 0a. Start QGC tile server for custom map
+echo "[0/4] Starting QGC tile server on port 8844..."
+pkill -f 'tile_server.py' >/dev/null 2>&1 || true
+nohup python3 /home/davor/projects/DronAI/scripts/maps/tile_server.py > /tmp/tile_server.log 2>&1 &
+echo "Tile server PID: $!"
 
 # 0. Hard cleanup to avoid stale PX4 instance conflicts
 pkill -f 'PX4-Autopilot/build/.*/bin/px4' >/dev/null 2>&1 || true
